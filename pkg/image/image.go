@@ -20,6 +20,7 @@ import (
 	"strings"
 
 	"github.com/kubeedge/kubeedge/common/constants"
+	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 )
 
 const (
@@ -30,9 +31,8 @@ const (
 )
 
 const (
-	EdgePause = "pause"
-	EdgeCore  = "edgecore"
-	EdgeMQTT  = "mqtt"
+	EdgeCore = "edgecore"
+	EdgeMQTT = "mqtt"
 )
 
 type Set map[string]string
@@ -51,13 +51,15 @@ var edgeComponentSet = Set{
 }
 
 var edgeThirdPartySet = Set{
-	EdgeMQTT:  constants.DefaultMosquittoImage,
-	EdgePause: constants.DefaultPodSandboxImage,
+	EdgeMQTT: constants.DefaultMosquittoImage,
 }
 
-func EdgeSet(imageRepository, version string) Set {
-	set := edgeComponentSet.Current(imageRepository, version)
-	thirdSet := edgeThirdPartySet.Current(imageRepository, "")
+func EdgeSet(opt *common.JoinOptions) Set {
+	set := edgeComponentSet.Current(opt.ImageRepository, opt.KubeEdgeVersion)
+	thirdSet := edgeThirdPartySet.Current(opt.ImageRepository, "")
+	if !opt.WithMQTT {
+		thirdSet.Remove(EdgeMQTT)
+	}
 	set = set.Merge(thirdSet)
 	return set
 }
@@ -111,4 +113,9 @@ func (s Set) List() []string {
 		result = append(result, v)
 	}
 	return result
+}
+
+func (s Set) Remove(name string) Set {
+	delete(s, name)
+	return s
 }

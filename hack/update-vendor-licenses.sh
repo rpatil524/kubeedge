@@ -142,7 +142,7 @@ process_content () {
 #############################################################################
 
 export GO111MODULE=on
-export GOFLAGS=-mod=mod
+export GOFLAGS=-mod=readonly
 
 # Check bash version
 if (( BASH_VERSINFO[0] < 4 )); then
@@ -164,7 +164,7 @@ cd "${LICENSE_ROOT}"
 
 kube::util::ensure-temp-dir
 
-# Save the genreated LICENSE file for each package temporarily
+# Save the generated LICENSE file for each package temporarily
 TMP_LICENSE_FILE="${KUBE_TEMP}/LICENSES.$$"
 
 # The directory to save all the LICENSE files
@@ -206,8 +206,8 @@ for PACKAGE in ${modules}; do
   fi
   # if there are no files vendored under this package...
   if [[ -z "$(find "${DEPS_DIR}/${PACKAGE}" -mindepth 1 -maxdepth 1 -type f)" ]]; then
-    # and we have the same number of submodules as subdirectories...
-    if [[ "$(find "${DEPS_DIR}/${PACKAGE}/" -mindepth 1 -maxdepth 1 -type d | wc -l)" -eq "$(echo "${modules}" | grep -cE "^${PACKAGE}/")" ]]; then
+    # and we have at least the same number of submodules as subdirectories...
+    if [[ "$(find "${DEPS_DIR}/${PACKAGE}/" -mindepth 1 -maxdepth 1 -type d | wc -l)" -le "$(echo "${modules}" | grep -cE "^${PACKAGE}/")" ]]; then
       echo "Only submodules of ${PACKAGE} are vendored, skipping" >&2
       continue
     fi
